@@ -148,7 +148,7 @@ public final class RoulettePlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         PluginManager pluginManager = getServer().getPluginManager();
-
+        getLogger().info("Initializing plugin, fixed.");
         // Disable the plugin if the server version is older than 1.17.
         if (XReflection.MINOR_NUMBER < 17) {
             getLogger().info("This plugin only works from 1.13 and up (except 1.16), disabling...");
