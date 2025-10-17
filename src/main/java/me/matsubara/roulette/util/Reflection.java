@@ -219,8 +219,16 @@ public final class Reflection {
             field.setAccessible(true);
             return field.get(null);
         } catch (Exception exception) {
-            exception.printStackTrace();
+            // exception.printStackTrace(); // Removed to prevent secondary exceptions during static init
             return null;
         }
+    }
+
+    public static @Nullable Object getStaticFieldValue(Class<?> clazz, String... names) {
+        for (String name : names) {
+            Object value = getStaticFieldValue(clazz, name);
+            if (value != null) return value;
+        }
+        return null;
     }
 }

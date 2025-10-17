@@ -275,20 +275,34 @@ public final class PacketStand {
         CONNECTION = Reflection.getField(ENTITY_PLAYER, GAME_PACKET_LISTENER, "connection", true, "f", "c", "b", "playerConnection");
         if (XReflection.supports(18)) {
             // DATA_SHARED_FLAGS_ID, DATA_CUSTOM_NAME, DATA_CUSTOM_NAME_VISIBLE | DATA_CLIENT_FLAGS, DATA_X_POSE
-            if (XReflection.supports(21, 4)) {
-                DWO_ENTITY_DATA = Reflection.getStaticFieldValue(ENTITY, "ap");
-                DWO_CUSTOM_NAME = Reflection.getStaticFieldValue(ENTITY, "aQ");
-                DWO_CUSTOM_NAME_VISIBLE = Reflection.getStaticFieldValue(ENTITY, "aR");
-                DWO_ARMOR_STAND_DATA = Reflection.getStaticFieldValue(ENTITY_ARMOR_STAND, "bH");
-                DWO_HEAD_POSE = Reflection.getStaticFieldValue(ENTITY_ARMOR_STAND, "bI");
-                DWO_BODY_POSE = Reflection.getStaticFieldValue(ENTITY_ARMOR_STAND, "bJ");
-                DWO_LEFT_ARM_POSE = Reflection.getStaticFieldValue(ENTITY_ARMOR_STAND, "bK");
-                DWO_RIGHT_ARM_POSE = Reflection.getStaticFieldValue(ENTITY_ARMOR_STAND, "bL");
-                DWO_LEFT_LEG_POSE = Reflection.getStaticFieldValue(ENTITY_ARMOR_STAND, "bM");
-                DWO_RIGHT_LEG_POSE = Reflection.getStaticFieldValue(ENTITY_ARMOR_STAND, "bN");
-                DWO_SCALE_ID = Reflection.getStaticFieldValue(ENTITY_DISPLAY, "u");
-                DWO_TEXT_ID = Reflection.getStaticFieldValue(ENTITY_TEXT_DISPLAY, "aL");
-                DWO_BACKGROUND_COLOR_ID = Reflection.getStaticFieldValue(ENTITY_TEXT_DISPLAY, "aN");
+            if (XReflection.supports(21, 6)) {
+                DWO_ENTITY_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "az"));
+                DWO_CUSTOM_NAME = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "bl"));
+                DWO_CUSTOM_NAME_VISIBLE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "bm"));
+                DWO_ARMOR_STAND_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bS"));
+                DWO_HEAD_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bT"));
+                DWO_BODY_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bU"));
+                DWO_LEFT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bV"));
+                DWO_RIGHT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bW"));
+                DWO_LEFT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bX"));
+                DWO_RIGHT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bY"));
+                DWO_SCALE_ID = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_DISPLAY, "t"));
+                DWO_TEXT_ID = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_TEXT_DISPLAY, "aV"));
+                DWO_BACKGROUND_COLOR_ID = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_TEXT_DISPLAY, "aX"));
+            } else if (XReflection.supports(21, 4)) {
+                DWO_ENTITY_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "ap"));
+                DWO_CUSTOM_NAME = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aQ"));
+                DWO_CUSTOM_NAME_VISIBLE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY, "aR"));
+                DWO_ARMOR_STAND_DATA = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bJ"));
+                DWO_HEAD_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bK"));
+                DWO_BODY_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bL"));
+                DWO_LEFT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bM"));
+                DWO_RIGHT_ARM_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bN"));
+                DWO_LEFT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bO"));
+                DWO_RIGHT_LEG_POSE = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_ARMOR_STAND, "bP"));
+                DWO_SCALE_ID = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_DISPLAY, "u"));
+                DWO_TEXT_ID = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_TEXT_DISPLAY, "aL"));
+                DWO_BACKGROUND_COLOR_ID = Reflection.getFieldValue(Reflection.getFieldGetter(ENTITY_TEXT_DISPLAY, "aN"));
             } else if (XReflection.supports(21, 2)) {
                 DWO_ENTITY_DATA = Reflection.getStaticFieldValue(ENTITY, "am");
                 DWO_CUSTOM_NAME = Reflection.getStaticFieldValue(ENTITY, "aO");
@@ -616,6 +630,15 @@ public final class PacketStand {
         if (metadata != null) return metadata;
 
         try {
+            // If critical reflection handles are missing, skip metadata generation.
+            if ((XReflection.supports(20, 6) && (registryFriendlyByteBuf == null || immutableRegistryAccess == null))
+                    || (!XReflection.supports(20, 6) && packetDataSerializer == null)
+                    || packetEntityMetadata == null
+                    || writeByte == null) {
+                plugin.getLogger().warning("Skipping metadata packet generation: missing reflection handlers for this server version.");
+                return null;
+            }
+
             Object packetSerializer;
             if (XReflection.supports(20, 6)) {
                 Object registry = immutableRegistryAccess.invoke(Arrays.asList(ITEM, DATA_COMPONENT_TYPE));
@@ -624,32 +647,47 @@ public final class PacketStand {
                 packetSerializer = packetDataSerializer.invoke(Unpooled.buffer());
             }
 
-            writeInt.invoke(packetSerializer, id);
+            // write entity id if writeInt is available
+            if (writeInt != null) writeInt.invoke(packetSerializer, id);
 
             for (Object item : getDataWatcherItems()) {
-                if (!item.getClass().isAssignableFrom(DATA_WATCHER_ITEM)) continue;
+                if (item == null) continue;
+                if (DATA_WATCHER_ITEM != null && !DATA_WATCHER_ITEM.isAssignableFrom(item.getClass())) continue;
 
-                Object object = getObject.invoke(item);
-                Object value = getValue.invoke(item);
-                Object serializer = getSerializer.invoke(object);
-                int serializerIndex = (int) getIndex.invoke(object);
-                int serializerTypeId = (int) getTypeId.invoke(serializer);
+                Object object = getObject != null ? getObject.invoke(item) : null;
+                Object value = getValue != null ? getValue.invoke(item) : null;
+                Object serializer = getSerializer != null && object != null ? getSerializer.invoke(object) : null;
 
-                writeByte.invoke(packetSerializer, (byte) serializerIndex);
-                writeInt.invoke(packetSerializer, serializerTypeId);
+                Integer serializerIndex = (getIndex != null && object != null) ? (int) getIndex.invoke(object) : null;
+                Integer serializerTypeId = (getTypeId != null && serializer != null) ? (int) getTypeId.invoke(serializer) : null;
 
-                if (XReflection.supports(20, 6)) {
-                    Object codecObject = codec.invoke(serializer);
-                    encode.invoke(codecObject, packetSerializer, value);
-                } else {
-                    serialize.invoke(serializer, packetSerializer, value);
+                if (serializerIndex != null && serializerTypeId != null) {
+                    writeByte.invoke(packetSerializer, (byte) serializerIndex.intValue());
+                    if (writeInt != null) writeInt.invoke(packetSerializer, serializerTypeId.intValue());
+
+                    try {
+                        if (XReflection.supports(20, 6) && codec != null && encode != null) {
+                            Object codecObject = codec.invoke(serializer);
+                            encode.invoke(codecObject, packetSerializer, value);
+                        } else if (serialize != null) {
+                            serialize.invoke(serializer, packetSerializer, value);
+                        } else {
+                            // nothing we can do for this serializer, skip value
+                        }
+                    } catch (Throwable ex) {
+                        plugin.getLogger().warning("Failed to serialize a metadata value: " + ex.getMessage());
+                    }
                 }
             }
 
-            writeByte.invoke(packetSerializer, 0xff);
+            // end of list
+            if (writeByte != null) writeByte.invoke(packetSerializer, 0xff);
             return (metadata = packetEntityMetadata.invoke(packetSerializer));
         } catch (Throwable throwable) {
-            throw new RuntimeException("Failed to create a packet!", throwable);
+            // Don't crash the server because a metadata packet failed. Log and skip metadata.
+            plugin.getLogger().warning("Failed to create metadata packet: " + throwable.getMessage());
+            throwable.printStackTrace();
+            return null;
         }
     }
 
@@ -658,38 +696,82 @@ public final class PacketStand {
             List<Object> dataWatcherItems = new ArrayList<>();
             String name = settings.getCustomName();
 
+            // Ensure dataWatcherItem is available
+            if (dataWatcherItem == null) {
+                plugin.getLogger().warning("DataWatcher constructor is not available for this server version; skipping metadata items.");
+                return Collections.emptyList();
+            }
+
             if (isStand) {
-                dataWatcherItems.add(dataWatcherItem.invoke(DWO_ENTITY_DATA, (byte)
-                        ((settings.isFire() ? 0x01 : 0)
-                                | (settings.isInvisible() ? 0x20 : 0)
-                                | (settings.isGlow() ? 0x40 : 0))));
-
-                dataWatcherItems.add(dataWatcherItem.invoke(DWO_ARMOR_STAND_DATA, (byte)
-                        ((settings.isSmall() ? 0x01 : 0)
-                                | (settings.isArms() ? 0x04 : 0)
-                                | (settings.isBasePlate() ? 0 : 0x08)
-                                | (settings.isMarker() ? 0x10 : 0))));
-
-                for (Pose pose : Pose.values()) {
-                    addPoses(dataWatcherItems, pose.getDwo(), pose.get(settings));
+                // Safely add entity flags
+                try {
+                    dataWatcherItems.add(dataWatcherItem.invoke(DWO_ENTITY_DATA, (byte)
+                            ((settings.isFire() ? 0x01 : 0)
+                                    | (settings.isInvisible() ? 0x20 : 0)
+                                    | (settings.isGlow() ? 0x40 : 0))));
+                } catch (Throwable t) {
+                    plugin.getLogger().warning("Failed to add entity data watcher item: " + t.getMessage());
                 }
 
-                Optional<Object> optionalName = Optional.ofNullable(name != null && !name.isEmpty() ? fromStringOrNull.invoke(name) : null);
-                dataWatcherItems.add(dataWatcherItem.invoke(DWO_CUSTOM_NAME, optionalName));
-                dataWatcherItems.add(dataWatcherItem.invoke(DWO_CUSTOM_NAME_VISIBLE, settings.isCustomNameVisible()));
+                try {
+                    dataWatcherItems.add(dataWatcherItem.invoke(DWO_ARMOR_STAND_DATA, (byte)
+                            ((settings.isSmall() ? 0x01 : 0)
+                                    | (settings.isArms() ? 0x04 : 0)
+                                    | (settings.isBasePlate() ? 0 : 0x08)
+                                    | (settings.isMarker() ? 0x10 : 0))));
+                } catch (Throwable t) {
+                    plugin.getLogger().warning("Failed to add armor-stand data watcher item: " + t.getMessage());
+                }
+
+                for (Pose pose : Pose.values()) {
+                    try {
+                        addPoses(dataWatcherItems, pose.getDwo(), pose.get(settings));
+                    } catch (Throwable t) {
+                        plugin.getLogger().warning("Failed to add pose " + pose + ": " + t.getMessage());
+                    }
+                }
+
+                try {
+                    Optional<Object> optionalName = Optional.ofNullable(name != null && !name.isEmpty() ? (fromStringOrNull != null ? fromStringOrNull.invoke(name) : null) : null);
+                    dataWatcherItems.add(dataWatcherItem.invoke(DWO_CUSTOM_NAME, optionalName));
+                } catch (Throwable t) {
+                    plugin.getLogger().warning("Failed to add custom name data watcher item: " + t.getMessage());
+                }
+
+                try {
+                    dataWatcherItems.add(dataWatcherItem.invoke(DWO_CUSTOM_NAME_VISIBLE, settings.isCustomNameVisible()));
+                } catch (Throwable t) {
+                    plugin.getLogger().warning("Failed to add custom name visible data watcher item: " + t.getMessage());
+                }
             } else {
-                Vector scale = settings.getScale();
-                dataWatcherItems.add(dataWatcherItem.invoke(DWO_SCALE_ID, new Vector3f(
-                        (float) scale.getX(),
-                        (float) scale.getY(),
-                        (float) scale.getZ())));
-                dataWatcherItems.add(dataWatcherItem.invoke(DWO_TEXT_ID, fromStringOrNull.invoke(Strings.nullToEmpty(name))));
-                dataWatcherItems.add(dataWatcherItem.invoke(DWO_BACKGROUND_COLOR_ID, settings.getBackgroundColor()));
+                try {
+                    Vector scale = settings.getScale();
+                    dataWatcherItems.add(dataWatcherItem.invoke(DWO_SCALE_ID, new Vector3f(
+                            (float) scale.getX(),
+                            (float) scale.getY(),
+                            (float) scale.getZ())));
+                } catch (Throwable t) {
+                    plugin.getLogger().warning("Failed to add scale data watcher item: " + t.getMessage());
+                }
+
+                try {
+                    dataWatcherItems.add(dataWatcherItem.invoke(DWO_TEXT_ID, fromStringOrNull != null ? fromStringOrNull.invoke(Strings.nullToEmpty(name)) : null));
+                } catch (Throwable t) {
+                    plugin.getLogger().warning("Failed to add text data watcher item: " + t.getMessage());
+                }
+
+                try {
+                    dataWatcherItems.add(dataWatcherItem.invoke(DWO_BACKGROUND_COLOR_ID, settings.getBackgroundColor()));
+                } catch (Throwable t) {
+                    plugin.getLogger().warning("Failed to add background color data watcher item: " + t.getMessage());
+                }
             }
 
             return dataWatcherItems;
         } catch (Throwable throwable) {
-            throw new RuntimeException("Failed to create a packet!", throwable);
+            plugin.getLogger().warning("Failed to build data watcher items: " + throwable.getMessage());
+            throwable.printStackTrace();
+            return Collections.emptyList();
         }
     }
 

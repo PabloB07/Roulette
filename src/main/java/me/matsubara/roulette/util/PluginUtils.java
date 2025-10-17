@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
-import java.net.URL;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.function.BiPredicate;
@@ -78,7 +78,7 @@ public final class PluginUtils {
     private static final Class<?> CRAFT_META_SKULL = Reflection.getCraftClass("inventory", "CraftMetaSkull");
 
     private static final MethodHandle SET_PROFILE = Reflection.getMethod(CRAFT_META_SKULL, "setProfile", false, GameProfile.class);
-    private static final MethodHandle SET_OWNER_PROFILE = SET_PROFILE != null ? null : Reflection.getMethod(SkullMeta.class, "setOwnerProfile", false, PlayerProfile.class);
+    private static final MethodHandle SET_OWNER_PROFILE = Reflection.getMethod(SkullMeta.class, "setOwnerProfile", false, PlayerProfile.class);
 
     static {
         for (Field field : org.bukkit.Color.class.getDeclaredFields()) {
@@ -149,7 +149,16 @@ public final class PluginUtils {
     public static void applySkin(SkullMeta meta, UUID uuid, String texture, boolean isUrl) {
         try {
             // If the serialized profile field isn't set, ItemStack#isSimilar() and ItemStack#equals() throw an error.
-            if (SET_PROFILE != null) {
+            if (SET_OWNER_PROFILE != null) {
+                PlayerProfile profile = Bukkit.createPlayerProfile(uuid, "");
+
+                PlayerTextures textures = profile.getTextures();
+                String url = isUrl ? "http://textures.minecraft.net/texture/" + texture : getURLFromTexture(texture);
+                textures.setSkin(URI.create(url).toURL());
+
+                profile.setTextures(textures);
+                SET_OWNER_PROFILE.invoke(meta, profile);
+            } else if (SET_PROFILE != null) {
                 GameProfile profile = new GameProfile(uuid, "");
 
                 String value = isUrl ? new String(Base64.getEncoder().encode(String
@@ -158,15 +167,6 @@ public final class PluginUtils {
 
                 profile.getProperties().put("textures", new Property("textures", value));
                 SET_PROFILE.invoke(meta, profile);
-            } else if (SET_OWNER_PROFILE != null) {
-                PlayerProfile profile = Bukkit.createPlayerProfile(uuid, "");
-
-                PlayerTextures textures = profile.getTextures();
-                String url = isUrl ? "http://textures.minecraft.net/texture/" + texture : getURLFromTexture(texture);
-                textures.setSkin(new URL(url));
-
-                profile.setTextures(textures);
-                SET_OWNER_PROFILE.invoke(meta, profile);
             }
         } catch (Throwable throwable) {
             throwable.printStackTrace();
