@@ -45,10 +45,6 @@
                             <pattern>com.cryptomorin</pattern>
                             <shadedPattern>me.matsubara.roulette.util</shadedPattern>
                         </relocation>
-                        <relocation>
-                            <pattern>com.tchristofferson</pattern>
-                            <shadedPattern>me.matsubara.roulette.util</shadedPattern>
-                        </relocation>
                     </relocations>
                     <filters>
                         <filter>
@@ -190,13 +186,6 @@
             <artifactId>placeholderapi</artifactId>
             <version>2.11.6</version>
             <scope>provided</scope>
-        </dependency>
-        <!-- ConfigUpdater -->
-        <dependency>
-            <groupId>com.tchristofferson</groupId>
-            <artifactId>ConfigUpdater</artifactId>
-            <version>2.0-SNAPSHOT</version>
-            <scope>compile</scope>
         </dependency>
         <!-- Lombok -->
         <dependency>

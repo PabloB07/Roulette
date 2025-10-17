@@ -1,6 +1,6 @@
 package me.matsubara.roulette.util.config;
 
-import com.tchristofferson.configupdater.ConfigUpdater;
+// import com.tchristofferson.configupdater.ConfigUpdater;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -44,15 +44,15 @@ public class ConfigFileUtils {
             handleConfigChanges(plugin, file, config, change.predicate(), change.consumer(), change.newVersion());
         }
 
-        try {
-            ConfigUpdater.update(
-                    plugin,
-                    fileName,
-                    file,
-                    ignoreSection.apply(config));
-        } catch (IOException exception) {
-            exception.printStackTrace();
-        }
+        // try {
+        //     ConfigUpdater.update(
+        //             plugin,
+        //             fileName,
+        //             file,
+        //             ignoreSection.apply(config));
+        // } catch (IOException exception) {
+        //     exception.printStackTrace();
+        // }
 
         reloadAfterUpdating.accept(file);
     }

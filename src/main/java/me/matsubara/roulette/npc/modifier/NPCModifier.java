@@ -37,7 +37,9 @@ public class NPCModifier {
         players.forEach(player -> {
             for (LazyPacket packet : packetContainers) {
                 Object channel = PacketEvents.getAPI().getPlayerManager().getChannel(player);
-                PacketEvents.getAPI().getProtocolManager().sendPacket(channel, packet.provide(npc, player));
+                if (channel != null) {
+                    PacketEvents.getAPI().getProtocolManager().sendPacket(channel, packet.provide(npc, player));
+                }
             }
         });
         packetContainers.clear();

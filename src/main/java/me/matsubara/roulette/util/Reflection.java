@@ -212,4 +212,15 @@ public final class Reflection {
     public static @NotNull Class<?> getNMSClass(@Nullable String packageName, String sameName) {
         return getNMSClass(packageName, sameName, sameName);
     }
+
+    public static @Nullable Object getStaticFieldValue(Class<?> clazz, String name) {
+        try {
+            Field field = clazz.getDeclaredField(name);
+            field.setAccessible(true);
+            return field.get(null);
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            return null;
+        }
+    }
 }
